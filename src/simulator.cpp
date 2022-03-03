@@ -142,30 +142,36 @@ Simulator::FloatType Simulator::calculateError() {
 }
 
 void Simulator::iterateU() {
-    std::swap(u, un);
-    // for (SizeType i = 0; i <= (grid - 1); i++) {
-    //     for (SizeType j = 0; j <= (grid); j++) {
-    //         u[(i) * (grid + 1) + j] = un[(i) * (grid + 1) + j];
-    //     }
-    // }
+    //std::swap(u, un);
+    #pragma omp parallel for
+     for (SizeType i = 0; i <= (grid - 1); i++) {
+         #pragma omp parallel for
+         for (SizeType j = 0; j <= (grid); j++) {
+             u[(i) * (grid + 1) + j] = un[(i) * (grid + 1) + j];
+         }
+     }
 }
 
 void Simulator::iterateV() {
-    std::swap(v, vn);
-    // for (SizeType i = 0; i <= (grid); i++) {
-    //     for (SizeType j = 0; j <= (grid - 1); j++) {
-    //         v[(i)*grid + j] = vn[(i)*grid + j];
-    //     }
-    // }
+    //std::swap(v, vn);
+    #pragma omp parallel for
+     for (SizeType i = 0; i <= (grid); i++) {
+         #pragma omp parallel for
+         for (SizeType j = 0; j <= (grid - 1); j++) {
+             v[(i)*grid + j] = vn[(i)*grid + j];
+         }
+     }
 }
 
 void Simulator::iterateP() {
-    std::swap(p, pn);
-    // for (SizeType i = 0; i <= (grid); i++) {
-    //     for (SizeType j = 0; j <= (grid); j++) {
-    //         p[(i) * (grid + 1) + j] = pn[(i) * (grid + 1) + j];
-    //     }
-    // }
+    //std::swap(p, pn);
+    #pragma omp parallel for
+     for (SizeType i = 0; i <= (grid); i++) {
+         #pragma omp parallel for
+         for (SizeType j = 0; j <= (grid); j++) {
+             p[(i) * (grid + 1) + j] = pn[(i) * (grid + 1) + j];
+         }
+     }
 }
 
 void Simulator::deallocate() {

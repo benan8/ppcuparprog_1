@@ -1,0 +1,60 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_fe93e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_fe93e.dir/build.make CMakeFiles/cmTC_fe93e.dir/build
+gmake[1]: Entering directory '/home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fe93e.dir/src.c.o
+/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_fe93e.dir/src.c.o -c /home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_fe93e
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fe93e.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_fe93e.dir/src.c.o -o cmTC_fe93e 
+CMakeFiles/cmTC_fe93e.dir/src.c.o: In function `main':
+src.c:(.text+0x2d): undefined reference to `pthread_create'
+src.c:(.text+0x39): undefined reference to `pthread_detach'
+src.c:(.text+0x45): undefined reference to `pthread_cancel'
+src.c:(.text+0x56): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_fe93e.dir/build.make:99: cmTC_fe93e] Error 1
+gmake[1]: Leaving directory '/home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_fe93e/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bef0e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bef0e.dir/build.make CMakeFiles/cmTC_bef0e.dir/build
+gmake[1]: Entering directory '/home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bef0e.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -o CMakeFiles/cmTC_bef0e.dir/CheckFunctionExists.c.o -c /usr/local/share/cmake-3.21/Modules/CheckFunctionExists.c
+Linking C executable cmTC_bef0e
+/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bef0e.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create -rdynamic CMakeFiles/cmTC_bef0e.dir/CheckFunctionExists.c.o -o cmTC_bef0e  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+gmake[1]: *** [CMakeFiles/cmTC_bef0e.dir/build.make:99: cmTC_bef0e] Error 1
+gmake[1]: Leaving directory '/home/gpuuser12/ppcuparprog_1/test/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_bef0e/fast] Error 2
+
+
+
