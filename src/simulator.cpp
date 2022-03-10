@@ -6,9 +6,35 @@
 #include <iostream>
 #include <limits>
 
+#include <ctime>
+#include <vector>
+#include <chrono>
+
+struct data {
+    std::string name;
+    long unsigned int opC = 0;
+    long int time;
+
+    data(std::string _name, long int _time, long unsigned int o){
+        name = _name;
+        time = _time;
+        opC = o;
+    }
+    
+    void print(){
+
+        float timeS = float(time)/1000;
+        float speed = (float(opC)/1048576)/timeS;
+        std::cout << name << "\t\t" << opC << "\t\t" << time << " ms" << "\t\t\t" << speed << std::endl;
+    }
+};
+
+std::vector<data> adatok;
+
 void Simulator::setPrinting(bool toPrint) { printing = toPrint; }
 
 void Simulator::initU() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 0; i <= (grid - 1); i++) {
         u[(i) * (grid + 1) + grid] = 1.0;
@@ -18,9 +44,14 @@ void Simulator::initU() {
             u[(i) * (grid + 1) + j] = 0.0;
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("initU", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*2*sizeof(float) + (grid - 1)*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::initV() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 0; i <= (grid); i++) {
         #pragma omp parallel for
@@ -28,9 +59,14 @@ void Simulator::initV() {
             v[(i)*grid + j] = 0.0;
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("initV", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),grid*(grid-1)*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::initP() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 0; i <= (grid); i++) {
         #pragma omp parallel for
@@ -38,9 +74,14 @@ void Simulator::initP() {
             p[(i) * (grid + 1) + j] = 1.0;
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("initP", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid)*(grid)*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::solveUMomentum(const FloatType Re) {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 1; i <= (grid - 2); i++) {
         #pragma omp parallel for
@@ -55,9 +96,14 @@ void Simulator::solveUMomentum(const FloatType Re) {
                      + (u[(i) * (grid + 1) + j + 1] - 2.0 * u[(i) * (grid + 1) + j] + u[(i) * (grid + 1) + j - 1]) / dy / dy);
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("solveUMomentum", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 2)*(grid - 1)*(17*sizeof(float)));
+    adatok.push_back(d);
 }
 
 void Simulator::applyBoundaryU() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType j = 1; j <= (grid - 1); j++) {
         un[(0) * (grid + 1) + j] = 0.0;
@@ -69,9 +115,14 @@ void Simulator::applyBoundaryU() {
         un[(i) * (grid + 1) + 0] = -un[(i) * (grid + 1) + 1];
         un[(i) * (grid + 1) + grid] = 2 - un[(i) * (grid + 1) + grid - 1];
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("applyBoundaryU", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),2*(grid - 1)*sizeof(float)+(grid-1)*4*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::solveVMomentum(const FloatType Re) {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 1; i <= (grid - 1); i++) {
         #pragma omp parallel for
@@ -85,9 +136,14 @@ void Simulator::solveVMomentum(const FloatType Re) {
                               + (v[(i)*grid + j + 1] - 2.0 * v[(i)*grid + j] + v[(i)*grid + j - 1]) / dy / dy);
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("solveVMomentum", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 2)*(grid - 1)*(17*sizeof(float)));
+    adatok.push_back(d);
 }
 
 void Simulator::applyBoundaryV() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType j = 1; j <= (grid - 2); j++) {
         vn[(0) * grid + j] = -vn[(1) * grid + j];
@@ -99,9 +155,15 @@ void Simulator::applyBoundaryV() {
         vn[(i)*grid + 0] = 0.0;
         vn[(i)*grid + grid - 1] = 0.0;
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("applyBoundaryV", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),2*(grid - 2)*sizeof(float)+(grid)*4*sizeof(float));
+    adatok.push_back(d);
 }
 
+
 void Simulator::solveContinuityEquationP(const FloatType delta) {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 1; i <= (grid - 1); i++) {
         #pragma omp parallel for
@@ -110,9 +172,14 @@ void Simulator::solveContinuityEquationP(const FloatType delta) {
                 - dt * delta * ((un[(i) * (grid + 1) + j] - un[(i - 1) * (grid + 1) + j]) / dx + (vn[(i)*grid + j] - vn[(i)*grid + j - 1]) / dy);
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("solveContinuityEquationP", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*(grid - 1)*8*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::applyBoundaryP() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
     for (SizeType i = 1; i <= (grid - 1); i++) {
         pn[(i) * (grid + 1) + 0] = pn[(i) * (grid + 1) + 1];
@@ -124,9 +191,14 @@ void Simulator::applyBoundaryP() {
         pn[(0) * (grid + 1) + j] = pn[(1) * (grid + 1) + j];
         pn[(grid) * (grid + 1) + j] = pn[(grid - 1) * (grid + 1) + j];
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    data d("applyBoundaryP", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*4*sizeof(float)+grid*4*sizeof(float));
+    adatok.push_back(d);
 }
 
 Simulator::FloatType Simulator::calculateError() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     FloatType error = 0.0;
     #pragma omp parallel for reduction(+:error)
     for (SizeType i = 1; i <= (grid - 1); i++) {
@@ -137,11 +209,15 @@ Simulator::FloatType Simulator::calculateError() {
             error += fabs(m[(i) * (grid + 1) + j]);
         }
     }
+     auto t2 = std::chrono::high_resolution_clock::now();
+    data d("calculateError", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*(grid - 1)*9*sizeof(float));
+    adatok.push_back(d);
 
     return error;
 }
 
 void Simulator::iterateU() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     //std::swap(u, un);
     #pragma omp parallel for
      for (SizeType i = 0; i <= (grid - 1); i++) {
@@ -150,9 +226,14 @@ void Simulator::iterateU() {
              u[(i) * (grid + 1) + j] = un[(i) * (grid + 1) + j];
          }
      }
+
+      auto t2 = std::chrono::high_resolution_clock::now();
+    data d("iterateU", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*(grid)*2*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::iterateV() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     //std::swap(v, vn);
     #pragma omp parallel for
      for (SizeType i = 0; i <= (grid); i++) {
@@ -161,9 +242,14 @@ void Simulator::iterateV() {
              v[(i)*grid + j] = vn[(i)*grid + j];
          }
      }
+
+     auto t2 = std::chrono::high_resolution_clock::now();
+    data d("initU", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid - 1)*(grid)*2*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::iterateP() {
+    auto t1 = std::chrono::high_resolution_clock::now();
     //std::swap(p, pn);
     #pragma omp parallel for
      for (SizeType i = 0; i <= (grid); i++) {
@@ -172,6 +258,9 @@ void Simulator::iterateP() {
              p[(i) * (grid + 1) + j] = pn[(i) * (grid + 1) + j];
          }
      }
+     auto t2 = std::chrono::high_resolution_clock::now();
+    data d("initU", std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count(),(grid)*(grid)*2*sizeof(float));
+    adatok.push_back(d);
 }
 
 void Simulator::deallocate() {
@@ -229,6 +318,10 @@ void Simulator::run(const FloatType delta, const FloatType Re, unsigned maxSteps
         iterateV();
         iterateP();
         ++step;
+    }
+    std::cout << "Name" << "\t\t" << "count" << "\t\t" << "Time" << "\t\t\t" << "GB/s" << std::endl;
+    for (unsigned i = 0; i < adatok.size(); i++){
+        adatok[i].print();
     }
 }
 
